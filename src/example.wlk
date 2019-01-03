@@ -1,80 +1,130 @@
+import retenciones.*
+
 class SueldoPeon {
-	var sueldoBruto = 0
-	var sueldoNeto = 0
+
 	var valorHora = 300
+	var property horasTrabajadas = 0
 	var afiliadoAlGremio = false
-	
-	method sueldoBruto() {
-		return sueldoBruto
-	}
-	
-	method sueldoNeto() {
-		return sueldoNeto
-	}
 
 	method precioPorHora(_valorHora) {
 		valorHora = _valorHora
-	} 
-	
-	method calculoSueldoBruto(horasTrabajadas) {
-		sueldoBruto = valorHora * horasTrabajadas
-		if (sueldoBruto > 30000) {
-			sueldoBruto = sueldoBruto - (sueldoBruto - (30000)) * 0.02
-		}
 	}
-	
-	method calculoSueldoNeto() {
-		sueldoNeto = sueldoBruto / 117 * 100
-		if (afiliadoAlGremio) {
-			sueldoNeto = sueldoNeto / 101 * 100
-		}
+
+	method sueldoBruto() {
+		return valorHora * horasTrabajadas
 	}
-	
-	method afiliarse() {
-		afiliadoAlGremio = true
+
+	method sueldoNeto() {
+		return retencion.aplicar(self)
 	}
+
+	method afiliadoAlGremio() {
+		return afiliadoAlGremio
+	}
+
+	method afiliadoAlGremio(seAfilia) {
+		afiliadoAlGremio = seAfilia
+	}
+
+	method tipo() {
+		return "Peon"
+	}
+
 }
 
 class SueldoMedioOficial inherits SueldoPeon {
-	
-	override method calculoSueldoBruto(horasTrabajadas) {
-		super(horasTrabajadas)
-		sueldoBruto = sueldoBruto * 105 / 100
+
+	override method sueldoBruto() {
+		var sueldoBruto = super()
+		return sueldoBruto * 1.05
 	}
+
+	override method tipo() {
+		return "Medio oficial"
+	}
+
 }
 
 class SueldoOficial inherits SueldoPeon {
-	
-	override method calculoSueldoBruto(horasTrabajadas) {
-		super(horasTrabajadas)
-		sueldoBruto = sueldoBruto * 110 / 100
+
+	var property cumplioObjetivos = false
+
+	override method sueldoBruto() {
+		var sueldoBruto = super()
+		return sueldoBruto + (sueldoBruto * 10 / 100) + self.plusObjetivos(sueldoBruto)
 	}
-	
-	method cumpleObjetivos() {
-		sueldoBruto = sueldoBruto * 130 / 100
+
+	method plusObjetivos(sueldoBruto) {
+		if (cumplioObjetivos) {
+			return sueldoBruto * 30 / 100
+		}
+		return 0
 	}
+
+	override method tipo() {
+		return "Oficial"
+	}
+
 }
 
 class SueldoCapataz inherits SueldoOficial {
-	
-	override method calculoSueldoBruto(horasTrabajadas) {
-		super(horasTrabajadas)
-		sueldoBruto += 4000
+
+	const plusSalario = 4000
+
+	override method sueldoBruto() {
+		return super() + plusSalario
 	}
-	
-	override method afiliarse() {
-		afiliadoAlGremio = false
+
+	override method afiliadoAlGremio() {
+		return false
 	}
+
+	override method tipo() {
+		return "Capataz"
+	}
+
 }
 
 class Empresa {
-	var sueldoMasAlto = []
-	var sueldoMasBajo = []
+
 	var empleados = []
-	
+
 	method agregarEmpleado(nombre) {
 		empleados.add(nombre)
 	}
+
+	method sueldoMasAlto() {
+		var empleado = empleados.max({ empleado => empleado.sueldoNeto() })
+		return empleado.sueldoNeto()
+	}
+
+	method sueldoMasBajo() {
+		var empleado = empleados.min{ e => e.sueldoNeto() }
+		return empleado.sueldoNeto()
+	}
+
+	method cantidadTotalEmpleados() {
+		return empleados.size()
+	}
+
+	method cantidadEmpleados(tipoEmpleado) {
+		return self.empleadosTipo(tipoEmpleado).size()
+	}
+
+	method empleadosTipo(tipoEmpleado) {
+		return empleados.filter({ e => e.tipo().equals(tipoEmpleado) })
+	}
+
+	method promedioSueldos() {
+		// suma de todo / la cantidad de elementos que sumé
+		var totalSueldos = empleados.sum({ e => e.sueldBruto() })
+		return totalSueldos / empleados.size()
+	}
+
+	method promedioSueldos(tipoEmpleado) {
+		var empleadosDeUnTipo = self.empleadosTipo(tipoEmpleado)
+		var totalSueldos = empleadosDeUnTipo.sum({ e => e.sueldBruto() })
+		return totalSueldos / empleadosDeUnTipo.size()
+	}
+
 }
-
-
